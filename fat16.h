@@ -5,7 +5,6 @@
 
 // FAT16 Boot Sector - zawiera podstawowe informacje na temat wyglądu
 // systemu plików
-
 typedef struct {
     unsigned char jmp[3];                   // instrukcje wykorzystywane przy bootowaniu
     char oem[8];                            // określa sposób formatowania dysku
@@ -29,4 +28,16 @@ typedef struct {
     char fs_type[8];                        // typ systemu plików
     char boot_code[448];
     unsigned short boot_sector_signature;
-} __attribute((packed)) FAT16BootSector
+} __attribute((packed)) FAT16BootSector;
+
+// FAT16 Entry - zawiera informacje na temat obiektów tj. katalog, plik
+typedef struct {
+    unsigned char filename[8];              // nazwa
+    unsigned char ext[3];                   // rozszerzenie
+    unsigned char attributes;               // atrybuty
+    unsigned char reserved[10];             
+    unsigned short modify_time;             // czas modyfikacji, utworzenia
+    unsigned short modify_date;             // data modyfikacji, utworzenia
+    unsigned short starting_cluster;        // numer początkowego klastra z danymi
+    unsigned int file_size;                 // rozmiar
+} __attribute((packed)) FAT16Entry;
