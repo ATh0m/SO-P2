@@ -83,3 +83,6 @@ dkms.conf
 
 ### Custom ###
 .ycm_extra_conf.py
+
+fs_image.raw
+fs_root/
