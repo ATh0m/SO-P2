@@ -9,7 +9,7 @@ typedef struct {
     unsigned char jmp[3];                   // instrukcje wykorzystywane przy bootowaniu
     char oem[8];                            // określa sposób formatowania dysku
     unsigned short sector_size;             // rozmiar sektora w bajtach
-    unsigned short sectors_per_cluster;     // liczba sektorów na klaster
+    unsigned char sectors_per_cluster;      // liczba sektorów na klaster
     unsigned short reserved_sectors;        // liczba zarezerwowanych sektorów
     unsigned char number_of_fats;           // liczba kopii FAT
     unsigned short root_dir_entries;        // liczba elementów katalogu root (włącznie z nieużywanymi)
