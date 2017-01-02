@@ -30,6 +30,9 @@ typedef struct {
     unsigned short boot_sector_signature;
 } __attribute((packed)) FAT16BootSector;
 
+// Wypisz informacje z FAT16 Boot Sector
+void print_fat16_boot_sector_info(FAT16BootSector *bs);
+
 // FAT16 Entry - zawiera informacje na temat obiektów tj. katalog, plik
 typedef struct {
     unsigned char filename[8];              // nazwa
@@ -41,3 +44,6 @@ typedef struct {
     unsigned short starting_cluster;        // numer początkowego klastra z danymi
     unsigned int file_size;                 // rozmiar
 } __attribute((packed)) FAT16Entry;
+
+// Wypisz informacje z FAT16 Entry
+void print_fat16_entry_info(FAT16Entry *entry);
