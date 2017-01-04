@@ -3,11 +3,14 @@ CFLAGS = -std=gnu99 -Wall -Wextra
 
 default: main
 
-main: main.c fat16.o
-	$(CC) $(CFLAGS) -o main main.c fat16.o
+main: main.c fat16.o entry.o
+	$(CC) $(CFLAGS) -o main main.c fat16.o entry.o
 
 fat16.o: fat16.c fat16.h
 	$(CC) $(CFLAGS) -c fat16.c
+
+entry.o: entry.c entry.h
+	$(CC) $(CFLAGS) -c entry.c
 
 clean:
 	-rm main *.o
@@ -17,7 +20,7 @@ clean:
 # Debug section.
 
 device: 
-	dd if=/dev/zero of=fs_image.raw count=10240 bs=1024
+	dd if=/dev/zero of=fs_image.raw count=1024 bs=1024
 	mkfs.vfat -F 16 -n SO2017 -v fs_image.raw
 
 mount:

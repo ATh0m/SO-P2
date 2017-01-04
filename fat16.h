@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include "entry.h"
 
 // Zestaw struktur opisujących ważne sektory systemu plików FAT16
 

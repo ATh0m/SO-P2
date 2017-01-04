@@ -25,6 +25,7 @@ void print_fat16_boot_sector_info(FAT16BootSector *bs) {
 }
 
 void print_fat16_entry_info(FAT16Entry *entry) {
+    
     switch(entry->filename[0]) {
     // nieużywany
     case 0x00:
@@ -37,7 +38,7 @@ void print_fat16_entry_info(FAT16Entry *entry) {
     case 0x05:
         printf("File starting with 0xE5: [%c%.7s.%.3s]\n", 0xE5, entry->filename+1, entry->ext);
         break;
-    // kataolgiem
+    // kataolg
     case 0x2E:
         printf("Directory: [%.8s.%.3s]\n", entry->filename, entry->ext);
         break;
@@ -45,7 +46,8 @@ void print_fat16_entry_info(FAT16Entry *entry) {
     default:
         printf("File: [%.8s.%.3s]\n", entry->filename, entry->ext);
     }
-    
+
+    // wypisz datę modyfikacji
     printf("  Modified: %04d-%02d-%02d %02d:%02d.%02d    Start: [%04X]    Size: %d\n", 
             1980 + (entry->modify_date >> 9),   // rok
             (entry->modify_date >> 5) & 0xF,    // miesiąc
@@ -55,4 +57,11 @@ void print_fat16_entry_info(FAT16Entry *entry) {
             entry->modify_time & 0x1F,          // sekunda
             entry->starting_cluster,            // początkowy klaster z danymi
             entry->file_size);                  // rozmiar 
+
+    // wypisz atrybuty
+    Attributes attributes = init_attributes(entry->attributes);
+    printf("  ");
+    print_attributes(&attributes);
+    printf("\n");
+
 }
