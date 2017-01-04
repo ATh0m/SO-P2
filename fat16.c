@@ -47,21 +47,16 @@ void print_fat16_entry_info(FAT16Entry *entry) {
         printf("File: [%.8s.%.3s]\n", entry->filename, entry->ext);
     }
 
+    // wypisz poczatkowy klaster z danymi i rozmiar
+    printf("  Start: [%04X]\n  Size: %d\n", entry->starting_cluster, entry->file_size);
+
     // wypisz datę modyfikacji
-    printf("  Modified: %04d-%02d-%02d %02d:%02d.%02d    Start: [%04X]    Size: %d\n", 
-            1980 + (entry->modify_date >> 9),   // rok
-            (entry->modify_date >> 5) & 0xF,    // miesiąc
-            entry->modify_date & 0x1F,          // dzień
-            (entry->modify_time >> 11),         // godzina
-            (entry->modify_time >> 5) & 0x3F,   // minuta
-            entry->modify_time & 0x1F,          // sekunda
-            entry->starting_cluster,            // początkowy klaster z danymi
-            entry->file_size);                  // rozmiar 
+    struct tm modify_time = init_time(entry->modify_date, entry->modify_time);
+    printf("  Modified: %s", asctime(&modify_time));
 
     // wypisz atrybuty
     Attributes attributes = init_attributes(entry->attributes);
-    printf("  ");
+    printf("  Attributes: ");
     print_attributes(&attributes);
     printf("\n");
-
 }

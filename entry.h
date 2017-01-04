@@ -1,5 +1,6 @@
 #include <stdbool.h>
 #include <stdio.h>
+#include <time.h>
 
 // Struktura opisująca atrybuty plików
 typedef struct {
@@ -16,3 +17,6 @@ Attributes init_attributes(char fat16_attributes);
 
 // Wypisz atrybuty pliku
 void print_attributes(Attributes *attributes);
+
+// Inicjalizacja struktury czasu
+struct tm init_time(unsigned short fat16_date, unsigned short fat16_time);
