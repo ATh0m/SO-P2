@@ -1,6 +1,7 @@
 #include "fat16.h"
 
 void print_fat16_boot_sector_info(FAT16BootSector *bs) {
+    printf("Boot Sector:\n");
     printf("  Jump code: %02X:%02X:%02X\n", bs->jmp[0], bs->jmp[1], bs->jmp[2]);
     printf("  OEM code: [%.8s]\n", bs->oem);
     printf("  sector_size: %d\n", bs->sector_size);
