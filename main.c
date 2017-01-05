@@ -19,7 +19,7 @@ int main(int argc, char *argv[]) {
     printf("\n");
 
     // przesunąć się do początku FAT
-    fseek(device, bs.sectors_per_cluster * bs.sector_size, SEEK_SET);
+    fseek(device, bs.reserved_sectors * bs.sector_size, SEEK_SET);
 
     // przeczytać sekcje FAT
     unsigned short *FAT = malloc(bs.fat_size_sectors * bs.sector_size);

@@ -20,7 +20,7 @@ clean:
 # Debug section.
 
 device: 
-	dd if=/dev/zero of=fs_image.raw count=1024 bs=1024
+	dd if=/dev/zero of=fs_image.raw count=10240 bs=1024
 	mkfs.vfat -F 16 -n SO2017 -v fs_image.raw
 
 mount:
