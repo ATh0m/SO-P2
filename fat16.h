@@ -59,10 +59,10 @@ struct fat16_attributes {
 };
 
 // Inicjalizacja struktury FAT16 Attributes
-struct fat16_attributes init_attributes(char fat16_raw_attributes);
+struct fat16_attributes convert_attributes(char fat16_raw_attributes);
 
 // Inicjalizacja struktury czasu
-struct tm init_time(unsigned short fat16_date, unsigned short fat16_time);
+struct tm convert_time(unsigned short fat16_date, unsigned short fat16_time);
 
 struct fat16_inode {
     uint64_t ino;

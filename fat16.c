@@ -1,6 +1,6 @@
 #include "fat16.h"
 
-struct fat16_attributes init_attributes(char fat16_raw_attributes) 
+struct fat16_attributes convert_attributes(char fat16_raw_attributes) 
 {
     struct fat16_attributes attributes;
 
@@ -14,7 +14,7 @@ struct fat16_attributes init_attributes(char fat16_raw_attributes)
     return attributes;
 }
 
-struct tm init_time(unsigned short fat16_date, unsigned short fat16_time) 
+struct tm convert_time(unsigned short fat16_date, unsigned short fat16_time) 
 {
     struct tm time_;
 
