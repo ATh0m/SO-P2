@@ -57,7 +57,7 @@ struct fat16_attributes {
     bool is_archive;            // archiwum
 };
 
-// Inicjalizacja struktury Attributes
+// Inicjalizacja struktury FAT16 Attributes
 struct fat16_attributes init_attributes(char fat16_raw_attributes);
 
 // Inicjalizacja struktury czasu
