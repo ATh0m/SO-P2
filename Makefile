@@ -3,17 +3,14 @@ CFLAGS = -std=gnu99 -Wall -Wextra
 
 default: main
 
-main: main.c fat16.o entry.o
-	$(CC) $(CFLAGS) -o main main.c fat16.o entry.o
+main: main.o fat16.o entry.o
 
 fat16.o: fat16.c fat16.h
-	$(CC) $(CFLAGS) -c fat16.c
 
 entry.o: entry.c entry.h
-	$(CC) $(CFLAGS) -c entry.c
 
 clean:
-	-rm main *.o
+	$(RM) main *.o
 
 .PHONY: clean
 
@@ -37,6 +34,9 @@ docker-create:
 	docker run -it --name SO-P2 --privileged=true -v $(shell pwd):/root -w /root ubuntu
 
 cleanall: clean
-	-rm -rf fs_root fs_image.raw
+	$(RM) -r fs_root fs_image.raw
+
+fuse: fuse.c
+	gcc -Wall fuse.c $(shell pkg-config fuse3 --cflags --libs) -o fuse
 
 .PHONY: device mount unmount docker docker-create cleanall
