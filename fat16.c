@@ -57,6 +57,9 @@ void fat16_inodes_del(struct fat16_inodes inodes)
             inode = next_inode;
         }
     }
+
+    free(inodes.container);
+    inodes.container = NULL;
 }
 
 static uint64_t fat16_ino_hash(struct fat16_inodes inodes, uint64_t ino)

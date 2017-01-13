@@ -83,8 +83,6 @@ struct fat16_inodes fat16_inodes_init(size_t size);
 
 void fat16_inodes_del(struct fat16_inodes inodes);
 
-static uint64_t fat16_ino_hash(struct fat16_inodes inodes, uint64_t ino);
-
 void fat16_inodes_add(struct fat16_inodes inodes, struct fat16_inode *inode);
 
 struct fat16_inode * fat16_inodes_get(struct fat16_inodes inodes, uint64_t ino);
