@@ -1,11 +1,17 @@
 #ifndef FAT16_H
 #define FAT16_H
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <time.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <assert.h>
+#include <syslog.h>
 
 // Zestaw struktur opisujących ważne sektory systemu plików FAT16
 
@@ -67,9 +73,14 @@ struct tm convert_time(unsigned short fat16_date, unsigned short fat16_time);
 struct fat16_inode {
     uint64_t ino;
 
+    struct fat16_attributes attributes;
+    struct fat16_entry entry;
+
     struct fat16_super *super;
     struct fat16_inode *next;
 };
+
+struct stat * fat16_inode_get_stat(struct fat16_inode *inode);
 
 #define FAT16_INODES_CONTAINER_SIZE 4096
 
@@ -91,7 +102,11 @@ struct fat16_super {
     struct fat16_boot_sector boot_sector;
     unsigned short *FAT;
 
+    FILE *device;
+
     struct fat16_inodes inodes;
 };
+
+
 
 #endif

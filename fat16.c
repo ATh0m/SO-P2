@@ -30,6 +30,24 @@ struct tm convert_time(unsigned short fat16_date, unsigned short fat16_time)
     return time_;
 }
 
+struct stat * fat16_inode_get_stat(struct fat16_inode *inode)
+{
+    struct stat *stat = calloc(1, sizeof(struct stat));
+
+    stat->st_ino = inode->ino;
+
+    if (inode->attributes.is_directory) {
+        stat->st_mode = S_IFDIR | 0755;
+        stat->st_nlink = 2;
+    } else {
+        stat->st_mode = S_IFREG | 0444;
+        stat->st_nlink = 1;
+        stat->st_size = 0;
+    }
+
+    return stat;
+}
+
 struct fat16_inodes fat16_inodes_init(size_t size)
 {
     struct fat16_inodes inodes = {
@@ -73,6 +91,8 @@ void fat16_inodes_add(struct fat16_inodes inodes, struct fat16_inode *inode)
     
     inode->next = inodes.container[hash];
     inodes.container[hash] = inode;
+    
+    syslog(LOG_INFO, "Added inode %lu", inode->ino);
 }
 
 struct fat16_inode * fat16_inodes_get(struct fat16_inodes inodes, uint64_t ino)

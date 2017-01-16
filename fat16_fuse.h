@@ -1,15 +1,16 @@
 #ifndef FAT16_FUSE_H
 #define FAT16_FUSE_H
 
-#define FUSE_USE_VERSION 30
-
-#include <fuse_lowlevel.h>
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
 #include <errno.h>
 #include <assert.h>
+
+#define FUSE_USE_VERSION 30
+
+#include <fuse_lowlevel.h>
 
 
 void fat16_fuse_open(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi);
