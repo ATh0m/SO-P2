@@ -98,6 +98,8 @@ void fat16_inodes_add(struct fat16_inodes inodes, struct fat16_inode *inode);
 
 struct fat16_inode * fat16_inodes_get(struct fat16_inodes inodes, uint64_t ino);
 
+struct fat16_inode * fat16_inodes_find(struct fat16_inodes inodes, uint64_t ino, struct fat16_entry entry);
+
 struct fat16_super {
     struct fat16_boot_sector boot_sector;
     unsigned short *FAT;
@@ -107,6 +109,13 @@ struct fat16_super {
     struct fat16_inodes inodes;
 };
 
+struct fat16_inode * fat16_lookup(struct fat16_super *super, struct fat16_inode *parent, const char *name);
 
+struct fat16_inode_node {
+    struct fat16_inode *inode;
+    struct fat16_inode_node *next;
+};
+
+struct fat16_inode_node * fat16_readdir(struct fat16_super *super, struct fat16_inode *parent);
 
 #endif

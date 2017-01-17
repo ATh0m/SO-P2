@@ -62,45 +62,23 @@ void fat16_fuse_lookup(fuse_req_t req, fuse_ino_t parent, const char *name)
         return;
     }
 
+    struct fat16_inode *inode = fat16_lookup(super, parent_inode, name);
+
+    if (!inode) {
+        fuse_reply_err(req, ENOENT);
+        return;
+    }
+
     syslog(LOG_INFO, "lookup %lu", parent);
 
     struct fuse_entry_param *entry = calloc(1, sizeof(struct fuse_entry_param));
 
     entry->attr_timeout = 0;
     entry->entry_timeout = 0;
+    entry->ino = inode->ino;
+    entry->attr = *fat16_inode_get_stat(inode);
 
-    struct fat16_entry fat16_entry;
-
-    fseek(super->device, (super->boot_sector.fat_size_sectors * super->boot_sector.number_of_fats + 1) * super->boot_sector.sector_size, SEEK_SET);
-
-    for (int i = 0; i < super->boot_sector.root_dir_entries; i++) {
-        uint64_t fat16_ino = ftell(super->device);
-        fread(&fat16_entry, sizeof(struct fat16_entry), 1, super->device);
-
-        if (strcmp(name, fat16_entry.filename) == 0) {
-            
-            struct fat16_inode *inode = fat16_inodes_get(super->inodes, fat16_ino);
-
-            if (inode == NULL) {
-                inode = malloc(sizeof(struct fat16_inode));
-
-                inode->ino = fat16_ino;
-
-                inode->entry = fat16_entry;
-                inode->attributes = convert_attributes(fat16_entry.attributes);
-
-                fat16_inodes_add(super->inodes, inode);
-            }
-           
-            entry->ino = inode->ino;
-            entry->attr = *fat16_inode_get_stat(inode);
-
-            fuse_reply_entry(req, entry);
-            return;
-        }
-    }
-
-    fuse_reply_err(req, ENOENT);
+    fuse_reply_entry(req, entry);
 }
 
 void fat16_fuse_opendir(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi) {;}
@@ -112,40 +90,24 @@ void fat16_fuse_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, 
     
     syslog(LOG_INFO, "readdir %lu", ino);
 
-    if (ino != 1) {
+    if (!parent_inode->attributes.is_directory) {
         fuse_reply_err(req, ENOTDIR);
         return;
     }
 
     struct dirbuf *b = calloc(1, sizeof(struct dirbuf));
+    struct fat16_inode *child_inode;
 
     dirbuf_add(req, b, ".", ino);
     dirbuf_add(req, b, "..", ino);
-    
-    struct fat16_entry fat16_entry;
-    fseek(super->device, (super->boot_sector.fat_size_sectors * super->boot_sector.number_of_fats + 1) * super->boot_sector.sector_size, SEEK_SET);
-    
-    for (int i = 0; i < super->boot_sector.root_dir_entries; i++) {
-        uint64_t fat16_ino = ftell(super->device);
-        fread(&fat16_entry, sizeof(struct fat16_entry), 1, super->device);
 
-        if (fat16_entry.filename[0] == 0x00) continue;
-        if (fat16_entry.filename[0] == 0xE5) continue;
-        if (fat16_entry.filename[0] == 0x05) continue;
+    struct fat16_inode_node *child_inodes = fat16_readdir(super, parent_inode);
 
-        struct fat16_inode *inode = fat16_inodes_get(super->inodes, fat16_ino);
-       
-        if (inode == NULL) {
-            inode = malloc(sizeof(struct fat16_inode));
-            inode->ino = fat16_ino;
+    while (child_inodes) {
+        child_inode = child_inodes->inode;
+        dirbuf_add(req, b, child_inode->entry.filename, child_inode->ino);
 
-            inode->entry = fat16_entry;
-            inode->attributes = convert_attributes(fat16_entry.attributes);
-
-            fat16_inodes_add(super->inodes, inode);
-        }
-        
-        dirbuf_add(req, b, inode->entry.filename, inode->ino);
+        child_inodes = child_inodes->next;
     }
 
     reply_buf_limited(req, b->p, b->size, off, size);
