@@ -47,7 +47,7 @@ void fat16_fuse_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *f
 
     struct stat *stat = fat16_inode_get_stat(inode);
 
-    syslog(LOG_INFO, "getattr %lu", ino);
+    syslog(LOG_INFO, "getattr %lu %s %s", ino, inode->entry.filename, inode->entry.ext);
 
     fuse_reply_attr(req, stat, 0);
 }
@@ -98,8 +98,8 @@ void fat16_fuse_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, 
     struct dirbuf *b = calloc(1, sizeof(struct dirbuf));
     struct fat16_inode *child_inode;
 
-    dirbuf_add(req, b, ".", ino);
-    dirbuf_add(req, b, "..", ino);
+    // dirbuf_add(req, b, ".", ino);
+    // dirbuf_add(req, b, "..", ino);
 
     struct fat16_inode_node *child_inodes = fat16_readdir(super, parent_inode);
 

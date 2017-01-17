@@ -130,11 +130,13 @@ void __set_device_position_on_entry(struct fat16_super *super, struct fat16_inod
 {
     struct fat16_boot_sector bs = super->boot_sector;
     
+    long root_directory_region_start = (bs.reserved_sectors + bs.number_of_fats * bs.fat_size_sectors) * bs.sector_size; 
+    long data_region_start = root_directory_region_start + bs.root_dir_entries * sizeof(struct fat16_entry);
+
     if (inode->ino == 1) {
-        long root_directory_region_start = (bs.reserved_sectors + bs.number_of_fats * bs.fat_size_sectors) * bs.sector_size; 
         fseek(super->device, root_directory_region_start, SEEK_SET);
     } else {
-        fseek(super->device, inode->ino, SEEK_SET);
+        fseek(super->device, data_region_start + (inode->entry.starting_cluster - 2) * bs.sectors_per_cluster * bs.sector_size, SEEK_SET);
     }
 }
 
