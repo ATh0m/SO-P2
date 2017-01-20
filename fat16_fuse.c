@@ -35,7 +35,7 @@ void fat16_fuse_read(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, str
 
 void fat16_fuse_release(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi) {;}
 
-void fat16_fuse_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi) 
+void fat16_fuse_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi)
 {
     struct fat16_super *super = fuse_req_userdata(req);
     struct fat16_inode *inode = fat16_inodes_get(super->inodes, ino);
@@ -47,12 +47,10 @@ void fat16_fuse_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *f
 
     struct stat *stat = fat16_inode_get_stat(inode);
 
-    syslog(LOG_INFO, "getattr %lu %s %s", ino, inode->entry.filename, inode->entry.ext);
-
     fuse_reply_attr(req, stat, 0);
 }
 
-void fat16_fuse_lookup(fuse_req_t req, fuse_ino_t parent, const char *name) 
+void fat16_fuse_lookup(fuse_req_t req, fuse_ino_t parent, const char *name)
 {
     struct fat16_super *super = fuse_req_userdata(req);
     struct fat16_inode *parent_inode = fat16_inodes_get(super->inodes, parent);
@@ -69,8 +67,6 @@ void fat16_fuse_lookup(fuse_req_t req, fuse_ino_t parent, const char *name)
         return;
     }
 
-    syslog(LOG_INFO, "lookup %lu", parent);
-
     struct fuse_entry_param *entry = calloc(1, sizeof(struct fuse_entry_param));
 
     entry->attr_timeout = 0;
@@ -83,12 +79,10 @@ void fat16_fuse_lookup(fuse_req_t req, fuse_ino_t parent, const char *name)
 
 void fat16_fuse_opendir(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi) {;}
 
-void fat16_fuse_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, struct fuse_file_info *fi) 
+void fat16_fuse_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, struct fuse_file_info *fi)
 {
     struct fat16_super *super = fuse_req_userdata(req);
     struct fat16_inode *parent_inode = fat16_inodes_get(super->inodes, ino);
-    
-    syslog(LOG_INFO, "readdir %lu", ino);
 
     if (!parent_inode->attributes.is_directory) {
         fuse_reply_err(req, ENOTDIR);
@@ -105,13 +99,16 @@ void fat16_fuse_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, 
 
     while (child_inodes) {
         child_inode = child_inodes->inode;
-        dirbuf_add(req, b, child_inode->entry.filename, child_inode->ino);
+
+        char *filename = fat16_format_name(child_inode->entry);
+        dirbuf_add(req, b, filename, child_inode->ino);
+        free(filename);
 
         child_inodes = child_inodes->next;
     }
 
     reply_buf_limited(req, b->p, b->size, off, size);
-    
+
     free(b->p);
     free(b);
 }

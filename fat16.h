@@ -12,6 +12,7 @@
 #include <unistd.h>
 #include <assert.h>
 #include <syslog.h>
+#include <ctype.h>
 
 // Zestaw struktur opisujących ważne sektory systemu plików FAT16
 
@@ -33,7 +34,7 @@ struct fat16_boot_sector {
     unsigned int hidden_sectors;            // liczba ukrytych sektorów
     unsigned int total_sectors_long;        // łączna liczba sektorów
     unsigned char drive_number;             // numer dysku
-    unsigned char current_head;             
+    unsigned char current_head;
     unsigned char boot_signature;
     unsigned int volume_id;                 // numer seryjny woluminu
     char volume_label[11];                  // etykieta woluminu
@@ -47,7 +48,7 @@ struct fat16_entry {
     unsigned char filename[8];              // nazwa
     unsigned char ext[3];                   // rozszerzenie
     unsigned char attributes;               // atrybuty
-    unsigned char reserved[10];             
+    unsigned char reserved[10];
     unsigned short modify_time;             // czas modyfikacji, utworzenia
     unsigned short modify_date;             // data modyfikacji, utworzenia
     unsigned short starting_cluster;        // numer początkowego klastra z danymi
@@ -117,5 +118,7 @@ struct fat16_inode_node {
 };
 
 struct fat16_inode_node * fat16_readdir(struct fat16_super *super, struct fat16_inode *parent);
+
+char * fat16_format_name(struct fat16_entry entry);
 
 #endif
