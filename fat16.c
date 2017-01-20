@@ -36,6 +36,13 @@ struct stat * fat16_inode_get_stat(struct fat16_inode *inode)
 
     stat->st_ino = inode->ino;
 
+    struct tm mtime = convert_time(inode->entry.modify_date, inode->entry.modify_time);
+    struct timespec ts = {.tv_sec = mktime(&mtime)};
+
+    stat->st_atim = ts;
+    stat->st_mtim = ts;
+    stat->st_ctim = ts;
+
     if (inode->attributes.is_directory) {
         stat->st_mode = S_IFDIR | 0755;
         stat->st_nlink = 2;
@@ -202,6 +209,10 @@ struct fat16_inode_node * fat16_readdir(struct fat16_super *super, struct fat16_
 char * fat16_format_name(struct fat16_entry entry)
 {
     char *name = calloc(20, sizeof(char));
+    struct fat16_attributes attributes = convert_attributes(entry.attributes);
+
+    if (attributes.is_hidden)
+        strcat(name, ".");
 
     int i = 0;
     for (i; i < 8; i++)
@@ -209,7 +220,7 @@ char * fat16_format_name(struct fat16_entry entry)
 
     strncat(name, entry.filename, i);
 
-    if (!convert_attributes(entry.attributes).is_directory) {
+    if (!attributes.is_directory) {
         strcat(name, ".");
         strncat(name, entry.ext, 3);
     }

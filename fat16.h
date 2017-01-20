@@ -13,6 +13,9 @@
 #include <assert.h>
 #include <syslog.h>
 #include <ctype.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <fcntl.h>
 
 // Zestaw struktur opisujących ważne sektory systemu plików FAT16
 
