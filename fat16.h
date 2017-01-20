@@ -122,6 +122,8 @@ struct fat16_inode_node {
 
 struct fat16_inode_node * fat16_readdir(struct fat16_super *super, struct fat16_inode *parent);
 
+void fat16_read(struct fat16_super *super, struct fat16_inode *inode, char *buffer, size_t size);
+
 char * fat16_format_name(struct fat16_entry entry);
 
 #endif

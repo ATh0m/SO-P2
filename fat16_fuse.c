@@ -29,9 +29,44 @@ static int reply_buf_limited(fuse_req_t req, const char *buf, size_t bufsize, of
 
 
 
-void fat16_fuse_open(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi) {;}
+void fat16_fuse_open(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi) 
+{
 
-void fat16_fuse_read(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, struct fuse_file_info *fi) {;}
+    struct fat16_super *super = fuse_req_userdata(req);
+    struct fat16_inode *inode = fat16_inodes_get(super->inodes, ino);
+
+    if (inode == NULL) {
+        fuse_reply_err(req, ENOENT);
+        return;
+    }
+
+    if (inode->attributes.is_directory) {
+        fuse_reply_err(req, EISDIR);
+        return;
+    }
+    
+    fuse_reply_open(req, fi);
+}
+
+void fat16_fuse_read(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, struct fuse_file_info *fi) 
+{
+
+    struct fat16_super *super = fuse_req_userdata(req);
+    struct fat16_inode *inode = fat16_inodes_get(super->inodes, ino);
+
+    if (inode == NULL) {
+        fuse_reply_err(req, ENOENT);
+        return;
+    }
+
+    char *buffer = malloc(size * sizeof(char));
+
+    fat16_read(super, inode, buffer, size);
+
+    reply_buf_limited(req, buffer, size, off, size);
+
+    free(buffer);
+}
 
 void fat16_fuse_release(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi) {;}
 
@@ -77,7 +112,10 @@ void fat16_fuse_lookup(fuse_req_t req, fuse_ino_t parent, const char *name)
     fuse_reply_entry(req, entry);
 }
 
-void fat16_fuse_opendir(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi) {;}
+void fat16_fuse_opendir(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi) 
+{
+    fuse_reply_open(req, fi);
+}
 
 void fat16_fuse_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, struct fuse_file_info *fi)
 {

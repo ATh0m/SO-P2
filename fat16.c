@@ -49,7 +49,7 @@ struct stat * fat16_inode_get_stat(struct fat16_inode *inode)
     } else {
         stat->st_mode = S_IFREG | 0444;
         stat->st_nlink = 1;
-        stat->st_size = 0;
+        stat->st_size = inode->entry.file_size;
     }
 
     return stat;
@@ -60,7 +60,6 @@ struct fat16_inodes fat16_inodes_init(size_t size)
     struct fat16_inodes inodes = {
         .size = size,
         .container = malloc(sizeof(struct fat16_inode *) * size),
-        .use = 0,
     };
 
     return inodes;
@@ -222,10 +221,22 @@ char * fat16_format_name(struct fat16_entry entry)
 
     if (!attributes.is_directory) {
         strcat(name, ".");
-        strncat(name, entry.ext, 3);
+
+        i = 0;
+        for (i; i < 3; i++)
+            if (entry.ext[i] == ' ') break;
+
+        strncat(name, entry.ext, i);
     }
 
     for(i = 0; name[i]; i++) name[i] = tolower(name[i]);
 
     return name;
+}
+
+void fat16_read(struct fat16_super *super, struct fat16_inode *inode, char *buffer, size_t size)
+{
+    __set_device_position_on_entry(super, inode);
+
+    fread(buffer, size, 1, super->device);
 }
