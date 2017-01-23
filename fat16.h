@@ -17,7 +17,7 @@
 #include <sys/types.h>
 #include <fcntl.h>
 
-// Zestaw struktur opisujących ważne sektory systemu plików FAT16
+/* ------- Zestaw struktur opisujących ważne sektory systemu plików FAT16 -------- */
 
 // FAT16 Boot Sector - zawiera podstawowe informacje na temat wyglądu
 // systemu plików
@@ -58,6 +58,8 @@ struct fat16_entry {
     unsigned int file_size;                 // rozmiar
 } __attribute((packed));
 
+/* --------------------- Atrybuty FAT16 -------------------------- */
+
 // Struktura opisująca atrybuty plików
 struct fat16_attributes {
     bool is_read_only;          // tylko do odczytu
@@ -68,42 +70,141 @@ struct fat16_attributes {
     bool is_archive;            // archiwum
 };
 
-// Inicjalizacja struktury FAT16 Attributes
+/*  Konwertuje ciąg bitów reprezentujących atrybuty pliku fat16 na 
+ *  strukture fat16_attributes
+ *  
+ *  @param [char] fat16_raw_attributes - ciąg bitów opisująchych atrybuty pliku fat16
+ *
+ *  @return - wypełniona struktura fat16_attributes
+ */
 struct fat16_attributes convert_attributes(char fat16_raw_attributes);
 
-// Inicjalizacja struktury czasu
+/* ----------------- Czas modyfikacji pliku FAT16 -------------------- */
+
+/*  Konweruje ciąg bitów opisujących date i czas modyfikacji pliku fat 16
+ *  na strukturę tm (time.h)
+ *
+ *  @param [unsigned short] fat16_date - ciąg bitów opisujących datę modyfikacji
+ *  @param [unsigned short] fat16_time - ciąg bitów opisujących czas modyfikacji
+ *
+ *  @return - wypełniona struktura tm (time.h)
+ */
 struct tm convert_time(unsigned short fat16_date, unsigned short fat16_time);
 
-struct fat16_inode {
-    uint64_t ino;
+/*  Formarowanie surowej nazwy pliku FAT16
+ *  
+ *  @param [struct fat16_entry] entry - surowy opis pliku FAT16
+ *
+ *  @return - sformatowana nazwa
+ */
+char * fat16_format_name(struct fat16_entry entry);
 
-    struct fat16_attributes attributes;
+// Struktura opisująca inode FAT16 
+struct fat16_inode {
+    uint64_t ino;                           // index inode'a
+
+    struct fat16_attributes attributes;     // atrybuty FAT16
     struct fat16_entry entry;
 
     struct fat16_super *super;
     struct fat16_inode *next;
 };
 
+/* --------------------------- Systemowa struktura stat ------------------------ */
+
+/* struct stat {
+ *     dev_t     st_dev;         // ID of device containing file
+ *     ino_t     st_ino;         // inode number
+ *     mode_t    st_mode;        // file type and mode
+ *     nlink_t   st_nlink;       // number of hard links
+ *     uid_t     st_uid;         // user ID of owner
+ *     gid_t     st_gid;         // group ID of owner
+ *     dev_t     st_rdev;        // device ID (if special file)
+ *     off_t     st_size;        // total size, in bytes
+ *     blksize_t st_blksize;     // blocksize for filesystem I/O
+ *     blkcnt_t  st_blocks;      // number of 512B blocks allocated
+ *
+ *     // Since Linux 2.6, the kernel supports nanosecond
+ *        precision for the following timestamp fields.
+ *        For the details before Linux 2.6, see NOTES. //
+ *
+ *     struct timespec st_atim;  // time of last access
+ *     struct timespec st_mtim;  // time of last modification
+ *     struct timespec st_ctim;  // time of last status change
+ *
+ *     #define st_atime st_atim.tv_sec      // Backward compatibility
+ *     #define st_mtime st_mtim.tv_sec
+ *     #define st_ctime st_ctim.tv_sec
+ * };
+ */
+
+/*  Wypełnianie systemowej struktury stat (sys/stat.h) na podstawie informacji ze
+ *  struktury fat16_inode
+ *
+ *  @param [struct fat16_inode *] inode - struktura opisująca inode fat16
+ *
+ *  @return - wypełniona struktura stat (sys/stat.h)
+ */
 struct stat * fat16_inode_get_stat(struct fat16_inode *inode);
 
-#define FAT16_INODES_CONTAINER_SIZE 4096
+/* ----------------- Struktura do przetrzymywania inode'ów FAT16 ---------------------- */
 
+/*  Struktura do przetrzymywania inode'ów FAT16. Działa na zasadzie hashmap'y.
+ *  Jest to tablica list, gdzie kluczem jest hash danego argumentu.
+ */
 struct fat16_inodes {
     struct fat16_inode **container;
     size_t use;
     size_t size;
 };
 
+/* Inicjalizacja struktury fat16_inodes
+ *
+ * @param [size_t] size - rozmiar
+ *
+ * @return - przygotowana struktura fat16_inodes
+ */
 struct fat16_inodes fat16_inodes_init(size_t size);
 
+/* Dealokacja struktury fat16_inodes
+ *
+ * @param [struct fat16_inodes] inodes
+ *
+ */
 void fat16_inodes_del(struct fat16_inodes inodes);
 
+
+/* Dodanie nowego elementu do kontenera
+ *
+ * @param [struct fat16_inodes] inodes - kontener
+ * @param [struct fat16_inode*] inode - element do dodania
+ *
+ */
 void fat16_inodes_add(struct fat16_inodes inodes, struct fat16_inode *inode);
 
+/* Wyciąganie elementu z kontenera na podstawie index'u inode
+ *
+ * @param [struct fat16_inodes] inodes - kontener
+ * @param [uint64_t] ino - index szukanego inode'a
+ *
+ * @return - struktura fat16_inode odpowiadająca index'owi 
+ */
 struct fat16_inode * fat16_inodes_get(struct fat16_inodes inodes, uint64_t ino);
 
+/* Pobieranie elementu z kontenera jeśli taki istnieje, a w przeciwnym
+ * razie tworzenie nowego i umieszczanie go w kontenerze
+ *
+ * @param [struct fat16_inodes] inodes - kontener
+ * @param [uint64_t] ino - index szukanego inode'a
+ * @param [struct fat16_entry] entry - surowy opis pliku FAT16
+ *
+ * @return - wskaźnik do szukanego elementu
+ */
 struct fat16_inode * fat16_inodes_find(struct fat16_inodes inodes, uint64_t ino, struct fat16_entry entry);
 
+/* --------------------- Główna struktura systemu FAT16 ------------------- */
+
+// Struktura opisująca główny wygląd systemu FAT16
 struct fat16_super {
     struct fat16_boot_sector boot_sector;
     unsigned short *FAT;
@@ -113,17 +214,46 @@ struct fat16_super {
     struct fat16_inodes inodes;
 };
 
+/* -------------------- Implementacja operacji fuse dla systemu FAT16 --------------------- */
+
+/* Odpowiednik fuse_lookup
+ * Wyszukiwanie inode'a w podanym katalogu na podstawie nazwy
+ *
+ * @param [struct fat16_super *] super - wskaźnik do głównej struktury FAT16
+ * @param [struct fat16_inode *] parent - wskaźnik do katalogu, rodzica
+ * @param [const char] name - nazwa szukanego elementu
+ *
+ * @return NULL - szukany element nie istnieje
+ * @return - wskaźnik na szukany element
+ */
 struct fat16_inode * fat16_lookup(struct fat16_super *super, struct fat16_inode *parent, const char *name);
 
+/* Lista inode'ów.
+ * Przydatne przy zwracanie zawartości katalogu
+ */
 struct fat16_inode_node {
     struct fat16_inode *inode;
     struct fat16_inode_node *next;
 };
 
+/*  Odpowiednik fuse_readdir
+ *  Zwraca zawartość danego katalogu
+ *
+ *  @param [struct fat16_super *] super - wskaźnik do głównej struktury FAT16
+ *  @param [struct fat16_inode *] parent - wskaźnik do przeglądanego katalogu
+ *
+ *  @return - lista elementów [struct fat16_inode *], będących zawartością katalogu
+ */
 struct fat16_inode_node * fat16_readdir(struct fat16_super *super, struct fat16_inode *parent);
 
+/*  Odpowiednik fuse_read
+ *  Zwraca zawartość danego pliku
+ *
+ *  @param [struct fat16_super *] super - wskaźnik do głównej struktury FAT16
+ *  @param [struct fat16_inode *] inode - wskażnik do przeglądanego pliku
+ *  @param [char *] buffer - wskaźnik do bufora
+ *  @param [size_t] size - rozmiar bufora
+ */
 void fat16_read(struct fat16_super *super, struct fat16_inode *inode, char *buffer, size_t size);
-
-char * fat16_format_name(struct fat16_entry entry);
 
 #endif

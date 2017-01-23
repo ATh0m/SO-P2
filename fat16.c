@@ -4,12 +4,12 @@ struct fat16_attributes convert_attributes(char fat16_raw_attributes)
 {
     struct fat16_attributes attributes;
 
-    attributes.is_read_only     = fat16_raw_attributes & 0x01;
-    attributes.is_hidden        = fat16_raw_attributes & 0x02;
-    attributes.is_system_file   = fat16_raw_attributes & 0x04;
-    attributes.is_volume_label  = fat16_raw_attributes & 0x08;
-    attributes.is_directory     = fat16_raw_attributes & 0x10;
-    attributes.is_archive       = fat16_raw_attributes & 0x20;
+    attributes.is_read_only     = fat16_raw_attributes & 0x01;  // tylko do odczytu
+    attributes.is_hidden        = fat16_raw_attributes & 0x02;  // ukryty
+    attributes.is_system_file   = fat16_raw_attributes & 0x04;  // plik systemowy
+    attributes.is_volume_label  = fat16_raw_attributes & 0x08;  // etykieta wolumenu
+    attributes.is_directory     = fat16_raw_attributes & 0x10;  // katalog
+    attributes.is_archive       = fat16_raw_attributes & 0x20;  // archiwum
 
     return attributes;
 }
