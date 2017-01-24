@@ -262,6 +262,8 @@ char * fat16_format_name(struct fat16_entry entry)
     return name;
 }
 
+// TODO: Poprawić pobieranie zawartości pliku
+// TODO: Dodać czytanie kolejnych klastrów
 void fat16_read(struct fat16_super *super, struct fat16_inode *inode, char *buffer, size_t size)
 {
     __set_device_position_on_entry(super, inode);

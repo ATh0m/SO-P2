@@ -48,6 +48,7 @@ void fat16_fuse_open(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi)
     fuse_reply_open(req, fi);
 }
 
+// FIX: Przy czytaniu kolejnych plików fuse zawiesza się (nic nie wypisuje)
 void fat16_fuse_read(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, struct fuse_file_info *fi) 
 {
 
