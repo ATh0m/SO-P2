@@ -78,6 +78,7 @@ struct stat * fat16_inode_get_stat(struct fat16_inode *inode)
         stat->st_mode = S_IFREG | 0444;     // Ustawienie uprawnień -r--r--r--
         stat->st_nlink = 1;
         stat->st_size = inode->entry.file_size;
+        // stat->st_size = 13;
     }
 
     return stat;

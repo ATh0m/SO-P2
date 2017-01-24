@@ -14,6 +14,8 @@
 
 void fat16_fuse_init(void *userdata, struct fuse_conn_info *conn);
 
+void fat16_fuse_destroy(void *userdata);
+
 void fat16_fuse_open(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi);
 
 void fat16_fuse_read(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, struct fuse_file_info *fi);
@@ -34,6 +36,7 @@ void fat16_fuse_stafs(fuse_req_t req, fuse_ino_t ino);
 
 static struct fuse_lowlevel_ops fat16_fuse_oper = {
     .init           = fat16_fuse_init,
+    .destroy        = fat16_fuse_destroy,
     .open           = fat16_fuse_open,
     .read           = fat16_fuse_read,
     .release        = fat16_fuse_release,
