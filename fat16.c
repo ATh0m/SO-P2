@@ -24,7 +24,7 @@ struct tm convert_time(unsigned short fat16_date, unsigned short fat16_time)
 
     time_.tm_hour   = fat16_time >> 11;                 // godzina
     time_.tm_min    = (fat16_time >> 5) & 0x3F;         // minuta
-    time_.tm_sec    = fat16_time & 0x1F;                // sekunda
+    time_.tm_sec    = (fat16_time & 0x1F) * 2;          // sekunda
 
     mktime(&time_);
     return time_;

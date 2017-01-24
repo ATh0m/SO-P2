@@ -28,6 +28,25 @@ static int reply_buf_limited(fuse_req_t req, const char *buf, size_t bufsize, of
 }
 
 
+void fat16_fuse_init(void *userdata, struct fuse_conn_info *conn) 
+{
+    struct fat16_super *fat16 = (struct fat16_super *)userdata;
+
+    fat16->inodes = fat16_inodes_init(4096);
+
+    fread(&fat16->boot_sector, sizeof(struct fat16_boot_sector), 1, fat16->device);
+
+    fseek(fat16->device, fat16->boot_sector.reserved_sectors * fat16->boot_sector.sector_size, SEEK_SET);
+    fat16->FAT = malloc(fat16->boot_sector.fat_size_sectors * fat16->boot_sector.sector_size);
+    fread(fat16->FAT, sizeof(unsigned short), fat16->boot_sector.fat_size_sectors * fat16->boot_sector.sector_size / 2, fat16->device);
+
+    struct fat16_inode *root = malloc(sizeof(struct fat16_inode));
+    root->ino = 1;
+    root->attributes.is_directory = true;
+    root->entry.starting_cluster = 0;
+
+    fat16_inodes_add(fat16->inodes, root);
+}
 
 void fat16_fuse_open(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi) 
 {

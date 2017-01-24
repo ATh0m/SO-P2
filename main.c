@@ -10,35 +10,13 @@
 
 int main(int argc, char *argv[]) {
 
-    openlog("slog", LOG_PID|LOG_CONS, LOG_USER);
-
     struct fuse_args args = FUSE_ARGS_INIT(argc, argv);
     struct fuse_session *se;
     struct fuse_cmdline_opts opts;
     
     if (fuse_parse_cmdline(&args, &opts) != 0) return 1;
 
-    struct fat16_super fat16;
-    fat16.inodes = fat16_inodes_init(4096);
-
-    //////////////////////////
-
-    fat16.device = fopen("fs_image.raw", "rb");
-
-    fread(&fat16.boot_sector, sizeof(struct fat16_boot_sector), 1, fat16.device);
-
-    fseek(fat16.device, fat16.boot_sector.reserved_sectors * fat16.boot_sector.sector_size, SEEK_SET);
-    fat16.FAT = malloc(fat16.boot_sector.fat_size_sectors * fat16.boot_sector.sector_size);
-    fread(fat16.FAT, sizeof(unsigned short), fat16.boot_sector.fat_size_sectors * fat16.boot_sector.sector_size / 2, fat16.device);
-
-    struct fat16_inode *root = malloc(sizeof(struct fat16_inode));
-    root->ino = 1;
-    root->attributes.is_directory = true;
-    root->entry.starting_cluster = 0;
-
-    fat16_inodes_add(fat16.inodes, root);
-    //////////////////////////
-
+    struct fat16_super fat16 = {.device = fopen("fs_image.raw", "rb")};
     se = fuse_session_new(&args, &fat16_fuse_oper, sizeof(fat16_fuse_oper), &fat16);
 
     if (se == NULL) printf("error 1\n");

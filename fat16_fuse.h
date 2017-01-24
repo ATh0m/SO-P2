@@ -12,6 +12,7 @@
 
 #include <fuse_lowlevel.h>
 
+void fat16_fuse_init(void *userdata, struct fuse_conn_info *conn);
 
 void fat16_fuse_open(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi);
 
@@ -32,6 +33,7 @@ void fat16_fuse_releasedir(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info
 void fat16_fuse_stafs(fuse_req_t req, fuse_ino_t ino);
 
 static struct fuse_lowlevel_ops fat16_fuse_oper = {
+    .init           = fat16_fuse_init,
     .open           = fat16_fuse_open,
     .read           = fat16_fuse_read,
     .release        = fat16_fuse_release,
