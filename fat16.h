@@ -230,6 +230,7 @@ struct fat16_inode * fat16_lookup(struct fat16_super *super, struct fat16_inode 
 
 /* Lista inode'ów.
  * Przydatne przy zwracanie zawartości katalogu
+ * TODO: Połączyć ze strukturą fat16_inodes
  */
 struct fat16_inode_node {
     struct fat16_inode *inode;
