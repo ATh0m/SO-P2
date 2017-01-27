@@ -9,7 +9,7 @@ main: main.c fat16.o fat16_fuse.o
 fat16.o: fat16.c fat16.h
 
 fat16_fuse.o: fat16_fuse.c fat16_fuse.h
-	$(CC) $(shell pkg-config fuse3 --cflags --libs) fat16_fuse.c -c
+	$(CC) $(CFLAGS) $(shell pkg-config fuse3 --cflags --libs) fat16_fuse.c -c
 
 clean:
 	$(RM) mount.fat16 *.o

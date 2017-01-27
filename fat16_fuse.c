@@ -62,8 +62,6 @@ void fat16_fuse_destroy(void *userdata)
 
 void fat16_fuse_open(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi) 
 {
-    // syslog (LOG_INFO, "open %d", ino);
-
     struct fat16_super *super = fuse_req_userdata(req);
     struct fat16_inode *inode = fat16_inodes_get(super->inodes, ino);
 
@@ -76,21 +74,17 @@ void fat16_fuse_open(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi)
         fuse_reply_err(req, EISDIR);
         return;
     }
+
+    if (fi->flags & 3 != O_RDONLY) {
+        fuse_reply_err(req, EACCES);
+        return;
+    }
     
     fuse_reply_open(req, fi);
 }
 
-// static const char *hello_str = "Hello World!\n";
-
-// FIX: Przy czytaniu kolejnych plików fuse zawiesza się (nic nie wypisuje)
 void fat16_fuse_read(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, struct fuse_file_info *fi) 
 {
-
-    // syslog (LOG_INFO, "read %d", ino);
-
-    // reply_buf_limited(req, hello_str, strlen(hello_str), off, size);
-    // return;
-
     struct fat16_super *super = fuse_req_userdata(req);
     struct fat16_inode *inode = fat16_inodes_get(super->inodes, ino);
 
@@ -98,8 +92,6 @@ void fat16_fuse_read(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, str
         fuse_reply_err(req, ENOENT);
         return;
     }
-
-    // syslog (LOG_INFO, "%d %d %d", ino, size, off);
 
     char *buffer = malloc(size * sizeof(char));
 
@@ -110,16 +102,10 @@ void fat16_fuse_read(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, str
     free(buffer);
 }
 
-void fat16_fuse_release(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi) 
-{
-    // syslog (LOG_INFO, "release %d", ino);
-    ;
-}
+void fat16_fuse_release(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi) {;}
 
 void fat16_fuse_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi)
 {
-    // syslog (LOG_INFO, "getattr %d", ino);
-
     struct fat16_super *super = fuse_req_userdata(req);
     struct fat16_inode *inode = fat16_inodes_get(super->inodes, ino);
 
@@ -130,9 +116,7 @@ void fat16_fuse_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *f
 
     struct stat *stat = fat16_inode_get_stat(inode);
 
-    fuse_reply_attr(req, stat, 1.0);
-
-    // syslog (LOG_INFO, "getattr-end %d", ino);
+    fuse_reply_attr(req, stat, 3600.0);
 }
 
 void fat16_fuse_lookup(fuse_req_t req, fuse_ino_t parent, const char *name)

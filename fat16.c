@@ -173,6 +173,16 @@ void __set_device_position_on_entry(struct fat16_super *super, struct fat16_inod
     }
 }
 
+void __set_device_position_on_cluster(struct fat16_super *super, int cluster_number)
+{
+    struct fat16_boot_sector bs = super->boot_sector;
+
+    long root_directory_region_start = (bs.reserved_sectors + bs.number_of_fats * bs.fat_size_sectors) * bs.sector_size;
+    long data_region_start = root_directory_region_start + bs.root_dir_entries * sizeof(struct fat16_entry);
+    
+    fseek(super->device, data_region_start + (cluster_number - 2) * bs.sectors_per_cluster * bs.sector_size, SEEK_SET);
+}
+
 struct fat16_inode * fat16_lookup(struct fat16_super *super, struct fat16_inode *parent, const char *name)
 {
     struct fat16_boot_sector bs = super->boot_sector;
