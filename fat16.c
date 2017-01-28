@@ -267,12 +267,28 @@ char * fat16_format_name(struct fat16_entry entry)
     return name;
 }
 
-// TODO: Poprawić pobieranie zawartości pliku
-// TODO: Dodać czytanie kolejnych klastrów
+#define min(x, y) ((x) < (y) ? (x) : (y))
+
 void fat16_read(struct fat16_super *super, struct fat16_inode *inode, char *buffer, size_t size, off_t off)
 {
+    int cluster = inode->entry.starting_cluster;
+    struct fat16_boot_sector bs = super->boot_sector;
 
-    __set_device_position_on_cluster(super, inode->entry.starting_cluster);
+    for (int i = 0; i < off / (bs.sectors_per_cluster * bs.sector_size); i++) cluster = super->FAT[cluster];
 
-    fread(buffer, size, 1, super->device);
+    __set_device_position_on_cluster(super, cluster);
+
+    size_t _off = off % (bs.sectors_per_cluster * bs.sector_size);
+    fseek(super->device, _off, SEEK_CUR);
+
+    size_t _size = min((bs.sectors_per_cluster * bs.sector_size) - _off, size);
+    fread(buffer, _size, 1, super->device);
+
+    while (_size < size) {
+        cluster = super->FAT[cluster];
+        __set_device_position_on_cluster(super, cluster);
+
+        fread(buffer + _size, min(bs.sectors_per_cluster * bs.sector_size, size - _size), 1, super->device);
+        _size += min(bs.sectors_per_cluster * bs.sector_size, size - _size);
+    }
 }

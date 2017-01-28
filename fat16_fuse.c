@@ -96,7 +96,7 @@ void fat16_fuse_read(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, str
 
     fat16_read(super, inode, buffer, size, off);
 
-    reply_buf_limited(req, buffer, size, off, size);
+    reply_buf_limited(req, buffer, size, 0, size);
 
     free(buffer);
 }
