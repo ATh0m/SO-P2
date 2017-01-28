@@ -1,3 +1,6 @@
+
+/* Tomasz Nanowski (tomasz.nanowski@gmail.com) */
+
 #ifndef FAT16_FUSE_H
 #define FAT16_FUSE_H
 

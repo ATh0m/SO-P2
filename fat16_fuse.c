@@ -1,3 +1,6 @@
+
+/* Tomasz Nanowski (tomasz.nanowski@gmail.com) */
+
 #include "fat16_fuse.h"
 
 /* --------------------- Implementacja z example/hello_ll.c ---------------------- */

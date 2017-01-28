@@ -1,3 +1,6 @@
+
+/* Tomasz Nanowski (tomasz.nanowski@gmail.com) */
+
 #include "fat16.h"
 
 struct fat16_attributes convert_attributes(char fat16_raw_attributes)
@@ -201,7 +204,6 @@ struct fat16_inode * fat16_lookup(struct fat16_super *super, struct fat16_inode 
         fread(&entry, sizeof(struct fat16_entry), 1, super->device);
 
         char *filename = fat16_format_name(entry);
-        // syslog(LOG_INFO, "%s %s", name, filename);
         if (strcmp(name, filename) == 0) {
             free(filename);
             return fat16_inodes_get(super->inodes, ino);

@@ -1,3 +1,6 @@
+
+/* Tomasz Nanowski (tomasz.nanowski@gmail.com) */
+
 #ifndef FAT16_H
 #define FAT16_H
 
