@@ -105,9 +105,6 @@ struct fat16_inode {
 
     struct fat16_attributes attributes;     // atrybuty FAT16
     struct fat16_entry entry;
-
-    struct fat16_super *super;
-    struct fat16_inode *next;
 };
 
 /* --------------------------- Systemowa struktura stat ------------------------ */
@@ -149,12 +146,18 @@ struct stat * fat16_inode_get_stat(struct fat16_inode *inode);
 
 /* ----------------- Struktura do przetrzymywania inode'ów FAT16 ---------------------- */
 
+/* Lista inode'ów. */
+struct fat16_inode_node {
+    struct fat16_inode *inode;
+    struct fat16_inode_node *next;
+};
+
+
 /*  Struktura do przetrzymywania inode'ów FAT16. Działa na zasadzie hashmap'y.
  *  Jest to tablica list, gdzie kluczem jest hash danego argumentu.
  */
 struct fat16_inodes {
-    struct fat16_inode **container;
-    size_t use;
+    struct fat16_inode_node **container;
     size_t size;
 };
 
@@ -227,15 +230,6 @@ struct fat16_super {
  * @return - wskaźnik na szukany element
  */
 struct fat16_inode * fat16_lookup(struct fat16_super *super, struct fat16_inode *parent, const char *name);
-
-/* Lista inode'ów.
- * Przydatne przy zwracanie zawartości katalogu
- * TODO: Połączyć ze strukturą fat16_inodes
- */
-struct fat16_inode_node {
-    struct fat16_inode *inode;
-    struct fat16_inode_node *next;
-};
 
 /*  Odpowiednik fuse_readdir
  *  Zwraca zawartość danego katalogu

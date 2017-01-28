@@ -88,7 +88,7 @@ struct fat16_inodes fat16_inodes_init(size_t size)
 {
     struct fat16_inodes inodes = {
         .size = size,
-        .container = malloc(sizeof(struct fat16_inode *) * size),
+        .container = malloc(sizeof(struct fat16_inode_node *) * size),
     };
 
     return inodes;
@@ -96,18 +96,19 @@ struct fat16_inodes fat16_inodes_init(size_t size)
 
 void fat16_inodes_del(struct fat16_inodes inodes)
 {
-    struct fat16_inode *inode;
-    struct fat16_inode *next_inode;
+    struct fat16_inode_node *node;
+    struct fat16_inode_node *next_node;
 
     for (int hash_val = 0; hash_val < (int) inodes.size; hash_val++) {
-        inode = inodes.container[hash_val];
+        node = inodes.container[hash_val];
 
-        while(inode) {
-            next_inode = inode->next;
-            // Wyczyścić tutaj dynamiczną zawartość inode
-            free(inode);
+        while(node) {
+            next_node = node->next;
+            
+            free(node->inode);
+            free(node);
 
-            inode = next_inode;
+            node = next_node;
         }
     }
 
@@ -124,19 +125,22 @@ void fat16_inodes_add(struct fat16_inodes inodes, struct fat16_inode *inode)
 {
     uint64_t hash = fat16_ino_hash(inodes, inode->ino);
 
-    inode->next = inodes.container[hash];
-    inodes.container[hash] = inode;
+    struct fat16_inode_node *node = malloc(sizeof(struct fat16_inode_node));
+    node->inode = inode;
+
+    node->next = inodes.container[hash];
+    inodes.container[hash] = node;
 }
 
 struct fat16_inode * fat16_inodes_get(struct fat16_inodes inodes, uint64_t ino)
 {
     uint64_t hash = fat16_ino_hash(inodes, ino);
 
-    struct fat16_inode *inode = inodes.container[hash];
+    struct fat16_inode_node *node = inodes.container[hash];
 
-    while (inode) {
-        if (inode->ino == ino) return inode;
-        inode = inode->next;
+    while (node) {
+        if (node->inode->ino == ino) return node->inode;
+        node = node->next;
     }
 
     return NULL;
@@ -159,20 +163,6 @@ struct fat16_inode * fat16_inodes_find(struct fat16_inodes inodes, uint64_t ino,
     return inode;
 }
 
-void __set_device_position_on_entry(struct fat16_super *super, struct fat16_inode *inode)
-{
-    struct fat16_boot_sector bs = super->boot_sector;
-
-    long root_directory_region_start = (bs.reserved_sectors + bs.number_of_fats * bs.fat_size_sectors) * bs.sector_size;
-    long data_region_start = root_directory_region_start + bs.root_dir_entries * sizeof(struct fat16_entry);
-
-    if (inode->ino == 1) {
-        fseek(super->device, root_directory_region_start, SEEK_SET);
-    } else {
-        fseek(super->device, data_region_start + (inode->entry.starting_cluster - 2) * bs.sectors_per_cluster * bs.sector_size, SEEK_SET);
-    }
-}
-
 void __set_device_position_on_cluster(struct fat16_super *super, int cluster_number)
 {
     struct fat16_boot_sector bs = super->boot_sector;
@@ -181,6 +171,19 @@ void __set_device_position_on_cluster(struct fat16_super *super, int cluster_num
     long data_region_start = root_directory_region_start + bs.root_dir_entries * sizeof(struct fat16_entry);
     
     fseek(super->device, data_region_start + (cluster_number - 2) * bs.sectors_per_cluster * bs.sector_size, SEEK_SET);
+}
+
+void __set_device_position_on_entry(struct fat16_super *super, struct fat16_inode *inode)
+{
+    struct fat16_boot_sector bs = super->boot_sector;
+    long root_directory_region_start = (bs.reserved_sectors + bs.number_of_fats * bs.fat_size_sectors) * bs.sector_size;
+
+    if (inode->ino == 1) {
+        fseek(super->device, root_directory_region_start, SEEK_SET);
+        return;
+    }
+ 
+    __set_device_position_on_cluster(super, inode->entry.starting_cluster);
 }
 
 struct fat16_inode * fat16_lookup(struct fat16_super *super, struct fat16_inode *parent, const char *name)
