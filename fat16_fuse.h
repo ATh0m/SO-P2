@@ -47,7 +47,7 @@ static struct fuse_lowlevel_ops fat16_fuse_oper = {
     .opendir        = fat16_fuse_opendir,
     .readdir        = fat16_fuse_readdir,
     .releasedir     = fat16_fuse_releasedir,
-//    .stafs          = fat16_fuse_stafs,
+    .statfs         = fat16_fuse_stafs,
 };
 
 #endif

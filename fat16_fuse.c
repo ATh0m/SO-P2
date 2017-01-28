@@ -119,6 +119,8 @@ void fat16_fuse_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *f
     struct stat *stat = fat16_inode_get_stat(inode);
 
     fuse_reply_attr(req, stat, 3600.0);
+
+    free(stat);
 }
 
 void fat16_fuse_lookup(fuse_req_t req, fuse_ino_t parent, const char *name)
@@ -143,9 +145,14 @@ void fat16_fuse_lookup(fuse_req_t req, fuse_ino_t parent, const char *name)
     entry->attr_timeout = 0;
     entry->entry_timeout = 0;
     entry->ino = inode->ino;
-    entry->attr = *fat16_inode_get_stat(inode);
+
+    struct stat *stat = fat16_inode_get_stat(inode);
+    entry->attr = *stat;
 
     fuse_reply_entry(req, entry);
+
+    free(stat);
+    free(entry);
 }
 
 void fat16_fuse_opendir(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi) 
@@ -192,7 +199,13 @@ void fat16_fuse_releasedir(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info
     fuse_reply_err(req, ENOENT);
 }
 
-void fat16_fuse_stafs(fuse_req_t req, fuse_ino_t ino) {;}
+void fat16_fuse_stafs(fuse_req_t req, fuse_ino_t ino) 
+{
+    struct statvfs *statfs = calloc(1, sizeof(struct statvfs));
+    fuse_reply_statfs(req, statfs);
+
+    free(statfs);
+}
 
 int main(int argc, char *argv[]) {
 
