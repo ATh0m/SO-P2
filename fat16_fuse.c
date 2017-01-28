@@ -101,7 +101,10 @@ void fat16_fuse_read(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, str
     free(buffer);
 }
 
-void fat16_fuse_release(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi) {;}
+void fat16_fuse_release(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi) 
+{
+    fuse_reply_err(req, ENOENT);
+}
 
 void fat16_fuse_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi)
 {
@@ -184,7 +187,10 @@ void fat16_fuse_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, 
     free(b);
 }
 
-void fat16_fuse_releasedir(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi) {;}
+void fat16_fuse_releasedir(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi) 
+{
+    fuse_reply_err(req, ENOENT);
+}
 
 void fat16_fuse_stafs(fuse_req_t req, fuse_ino_t ino) {;}
 
