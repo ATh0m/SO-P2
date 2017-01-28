@@ -84,8 +84,6 @@ dkms.conf
 ### Custom ###
 .ycm_extra_conf.py
 
-# fs_image.raw
+fs_image.raw
 fs_root/
 
-mount.fat16
-.bash_history

@@ -201,9 +201,9 @@ int main(int argc, char *argv[]) {
 
     int ret = -1;
 
-    if (se == NULL) {
-        if (!fuse_set_signal_handlers(se)) {
-            if (!fuse_session_mount(se, opts.mountpoint)) {
+    if (se != NULL) {
+        if (fuse_set_signal_handlers(se) == 0) {
+            if (fuse_session_mount(se, opts.mountpoint) == 0) {
                 fuse_daemonize(opts.foreground);
                 ret = fuse_session_loop(se);
                 fuse_session_unmount(se);
