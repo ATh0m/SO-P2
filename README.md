@@ -17,6 +17,5 @@ Głównym problemem będzie implementacja następujących operacji: *open, read,
 
 ```Bash
 make
-mkdir -p fs_root
-./fat16 fs_root
+./fat16 fs_image.raw fs_root
 ```

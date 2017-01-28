@@ -13,18 +13,3 @@ clean:
 	$(RM) *.o *~ fat16
 
 .PHONY: clean
-
-# Debug section.
-
-device: 
-	dd if=/dev/zero of=fs_image.raw count=10240 bs=1024
-	mkfs.vfat -F 16 -n SO2017 -v fs_image.raw
-
-mount:
-	mkdir -p fs_root
-	mount -t msdos -o loop,rw,showexec,umask=0 fs_image.raw fs_root
-
-unmount:
-	umount fs_root
-
-.PHONY: device mount unmount

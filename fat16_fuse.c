@@ -190,13 +190,13 @@ void fat16_fuse_stafs(fuse_req_t req, fuse_ino_t ino) {;}
 
 int main(int argc, char *argv[]) {
 
-    struct fuse_args args = FUSE_ARGS_INIT(argc, argv);
+    struct fuse_args args = FUSE_ARGS_INIT(argc-1, &argv[1]);
     struct fuse_session *se;
     struct fuse_cmdline_opts opts;
     
     if (fuse_parse_cmdline(&args, &opts) != 0) return 1;
 
-    struct fat16_super fat16 = {.device = fopen("fs_image.raw", "rb")};
+    struct fat16_super fat16 = {.device = fopen(argv[1], "rb")};
     se = fuse_session_new(&args, &fat16_fuse_oper, sizeof(fat16_fuse_oper), &fat16);
 
     int ret = -1;
