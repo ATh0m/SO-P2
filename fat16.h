@@ -255,6 +255,6 @@ struct fat16_inode_node * fat16_readdir(struct fat16_super *super, struct fat16_
  *  @param [char *] buffer - wskaźnik do bufora
  *  @param [size_t] size - rozmiar bufora
  */
-void fat16_read(struct fat16_super *super, struct fat16_inode *inode, char *buffer, size_t size);
+void fat16_read(struct fat16_super *super, struct fat16_inode *inode, char *buffer, size_t size, off_t off);
 
 #endif

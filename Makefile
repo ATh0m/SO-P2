@@ -1,18 +1,16 @@
 CC = gcc
-CFLAGS = -std=gnu99 # -Wall -Wextra
+CPPFLAGS = -Iinclude
+CFLAGS = -std=gnu99 -g -O2 -Wall -Wextra $(shell pkg-config --cflags fuse3)
+LDLIBS = $(shell pkg-config --libs fuse3)
 
-default: main
-
-main: main.c fat16.o fat16_fuse.o
-	$(CC) $(CFLAGS) -o mount.fat16 main.c fat16.o fat16_fuse.o $(shell pkg-config fuse3 --cflags --libs) 
+fat16: fat16.o fat16_fuse.o
 
 fat16.o: fat16.c fat16.h
 
 fat16_fuse.o: fat16_fuse.c fat16_fuse.h
-	$(CC) $(CFLAGS) $(shell pkg-config fuse3 --cflags --libs) fat16_fuse.c -c
 
 clean:
-	$(RM) mount.fat16 *.o
+	$(RM) *.o *~ fat16
 
 .PHONY: clean
 
@@ -29,13 +27,4 @@ mount:
 unmount:
 	umount fs_root
 
-docker:
-	docker start -ia SO-P2
-
-docker-create:
-	docker run -it --name SO-P2 --privileged=true -v $(shell pwd):/root -w /root ubuntu
-
-cleanall: clean
-	$(RM) -r fs_root fs_image.raw
-
-.PHONY: device mount unmount docker docker-create cleanall
+.PHONY: device mount unmount

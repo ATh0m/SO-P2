@@ -1,5 +1,4 @@
 #include "fat16_fuse.h"
-#include "fat16.h"
 
 /* --------------------- Implementacja z example/hello_ll.c ---------------------- */
 
@@ -95,7 +94,7 @@ void fat16_fuse_read(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, str
 
     char *buffer = malloc(size * sizeof(char));
 
-    fat16_read(super, inode, buffer, size);
+    fat16_read(super, inode, buffer, size, off);
 
     reply_buf_limited(req, buffer, size, off, size);
 
@@ -188,3 +187,34 @@ void fat16_fuse_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, 
 void fat16_fuse_releasedir(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi) {;}
 
 void fat16_fuse_stafs(fuse_req_t req, fuse_ino_t ino) {;}
+
+int main(int argc, char *argv[]) {
+
+    struct fuse_args args = FUSE_ARGS_INIT(argc, argv);
+    struct fuse_session *se;
+    struct fuse_cmdline_opts opts;
+    
+    if (fuse_parse_cmdline(&args, &opts) != 0) return 1;
+
+    struct fat16_super fat16 = {.device = fopen("fs_image.raw", "rb")};
+    se = fuse_session_new(&args, &fat16_fuse_oper, sizeof(fat16_fuse_oper), &fat16);
+
+    int ret = -1;
+
+    if (se == NULL) {
+        if (!fuse_set_signal_handlers(se)) {
+            if (!fuse_session_mount(se, opts.mountpoint)) {
+                fuse_daemonize(opts.foreground);
+                ret = fuse_session_loop(se);
+                fuse_session_unmount(se);
+            }
+            fuse_remove_signal_handlers(se);
+        }
+        fuse_session_destroy(se);
+    }
+
+    free(opts.mountpoint);
+    fuse_opt_free_args(&args);
+
+    return ret ? 1 : 0;
+}

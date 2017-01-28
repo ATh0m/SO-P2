@@ -8,6 +8,8 @@
 #include <errno.h>
 #include <assert.h>
 
+#include "fat16.h"
+
 #define FUSE_USE_VERSION 30
 
 #include <fuse_lowlevel.h>

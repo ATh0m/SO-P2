@@ -18,5 +18,5 @@ Głównym problemem będzie implementacja następujących operacji: *open, read,
 ```Bash
 make
 mkdir -p fs_root
-./mount.fat16 fs_root
+./fat16 fs_root
 ```

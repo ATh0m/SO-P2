@@ -249,22 +249,16 @@ char * fat16_format_name(struct fat16_entry entry)
     char *name = calloc(20, sizeof(char));
     struct fat16_attributes attributes = convert_attributes(entry.attributes);
 
-    if (attributes.is_hidden)
-        strcat(name, ".");
+    if (attributes.is_hidden) strcat(name, ".");
 
-    int i = 0;
-    for (i; i < 8; i++)
-        if (entry.filename[i] == ' ') break;
+    int i = 0; while (i < 8 && entry.filename[i] != ' ') i++;
 
     strncat(name, entry.filename, i);
 
     if (!attributes.is_directory) {
         strcat(name, ".");
 
-        i = 0;
-        for (i; i < 3; i++)
-            if (entry.ext[i] == ' ') break;
-
+        i = 0; while (i < 3 && entry.ext[i] != ' ') i++;
         strncat(name, entry.ext, i);
     }
 
@@ -275,9 +269,10 @@ char * fat16_format_name(struct fat16_entry entry)
 
 // TODO: Poprawić pobieranie zawartości pliku
 // TODO: Dodać czytanie kolejnych klastrów
-void fat16_read(struct fat16_super *super, struct fat16_inode *inode, char *buffer, size_t size)
+void fat16_read(struct fat16_super *super, struct fat16_inode *inode, char *buffer, size_t size, off_t off)
 {
-    __set_device_position_on_entry(super, inode);
+
+    __set_device_position_on_cluster(super, inode->entry.starting_cluster);
 
     fread(buffer, size, 1, super->device);
 }
