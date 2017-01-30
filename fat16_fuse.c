@@ -25,7 +25,7 @@ static void dirbuf_add(fuse_req_t req, struct dirbuf *b, const char *name, fuse_
 
 static int reply_buf_limited(fuse_req_t req, const char *buf, size_t bufsize, off_t off, size_t maxsize)
 {
-    if (off < bufsize)
+    if ((unsigned) off < bufsize)
         return fuse_reply_buf(req, buf + off, min(bufsize - off, maxsize));
     else
         return fuse_reply_buf(req, NULL, 0);
@@ -77,7 +77,7 @@ void fat16_fuse_open(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi)
         return;
     }
 
-    if (fi->flags & 3 != O_RDONLY) {
+    if ((fi->flags & 3) != O_RDONLY) {
         fuse_reply_err(req, EACCES);
         return;
     }
@@ -202,7 +202,7 @@ void fat16_fuse_releasedir(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info
     fuse_reply_err(req, ENOENT);
 }
 
-void fat16_fuse_stafs(fuse_req_t req, fuse_ino_t ino) 
+void fat16_fuse_statfs(fuse_req_t req, fuse_ino_t ino) 
 {
     struct statvfs *statfs = calloc(1, sizeof(struct statvfs));
     fuse_reply_statfs(req, statfs);

@@ -258,13 +258,13 @@ char * fat16_format_name(struct fat16_entry entry)
 
     int i = 0; while (i < 8 && entry.filename[i] != ' ') i++;
 
-    strncat(name, entry.filename, i);
+    strncat(name, (char *) entry.filename, i);
 
     if (!attributes.is_directory) {
         strcat(name, ".");
 
         i = 0; while (i < 3 && entry.ext[i] != ' ') i++;
-        strncat(name, entry.ext, i);
+        strncat(name, (char *) entry.ext, i);
     }
 
     for(i = 0; name[i]; i++) name[i] = tolower(name[i]);

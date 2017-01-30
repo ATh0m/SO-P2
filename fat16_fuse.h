@@ -37,7 +37,7 @@ void fat16_fuse_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, 
 
 void fat16_fuse_releasedir(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi);
 
-void fat16_fuse_stafs(fuse_req_t req, fuse_ino_t ino);
+void fat16_fuse_statfs(fuse_req_t req, fuse_ino_t ino);
 
 static struct fuse_lowlevel_ops fat16_fuse_oper = {
     .init           = fat16_fuse_init,
@@ -50,7 +50,7 @@ static struct fuse_lowlevel_ops fat16_fuse_oper = {
     .opendir        = fat16_fuse_opendir,
     .readdir        = fat16_fuse_readdir,
     .releasedir     = fat16_fuse_releasedir,
-    .statfs         = fat16_fuse_stafs,
+    .statfs         = fat16_fuse_statfs,
 };
 
 #endif
