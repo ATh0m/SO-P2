@@ -61,7 +61,7 @@ struct tm convert_time(unsigned short fat16_date, unsigned short fat16_time)
  * };
  */
 
-struct stat * fat16_inode_get_stat(struct fat16_inode *inode)
+struct stat * fat16_inode_get_stat(struct fat16_super *super, struct fat16_inode *inode)
 {
     struct stat *stat = calloc(1, sizeof(struct stat));
 
@@ -74,14 +74,20 @@ struct stat * fat16_inode_get_stat(struct fat16_inode *inode)
     stat->st_mtim = ts;
     stat->st_ctim = ts;
 
+    size_t sector_size = super->boot_sector.sectors_per_cluster * super->boot_sector.sector_size;
+    stat->st_blksize = sector_size;
+    stat->st_size = inode->entry.file_size;
+
+    stat->st_uid = super->uid;
+    stat->st_gid = super->gid;
+        
     if (inode->attributes.is_directory) {
         stat->st_mode = S_IFDIR | 0755;     // Ustawienie uprawnień dr-xr-xr-x
         stat->st_nlink = 2;
     } else {
         stat->st_mode = S_IFREG | 0444;     // Ustawienie uprawnień -r--r--r--
         stat->st_nlink = 1;
-        stat->st_size = inode->entry.file_size;
-        // stat->st_size = 13;
+        stat->st_blocks = (inode->entry.file_size + sector_size / 2) / sector_size;
     }
 
     return stat;
@@ -92,6 +98,7 @@ struct fat16_inodes fat16_inodes_init(size_t size)
     struct fat16_inodes inodes = {
         .size = size,
         .container = malloc(sizeof(struct fat16_inode_node *) * size),
+        .amount = 0,
     };
 
     return inodes;
@@ -133,6 +140,8 @@ void fat16_inodes_add(struct fat16_inodes inodes, struct fat16_inode *inode)
 
     node->next = inodes.container[hash];
     inodes.container[hash] = node;
+
+    inodes.amount++;
 }
 
 struct fat16_inode * fat16_inodes_get(struct fat16_inodes inodes, uint64_t ino)
@@ -223,6 +232,7 @@ struct fat16_inode_node * fat16_readdir(struct fat16_super *super, struct fat16_
     struct fat16_entry entry;
 
     int entries_amount = bs.sectors_per_cluster * bs.sector_size / sizeof(struct fat16_entry);
+    if (parent->ino == 1) entries_amount = super->boot_sector.root_dir_entries;
 
     struct fat16_inode_node *child_inodes = NULL;
     struct fat16_inode *child_inode;

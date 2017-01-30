@@ -46,10 +46,26 @@ void fat16_fuse_init(void *userdata, struct fuse_conn_info *conn)
     fat16->FAT = malloc(fat16->boot_sector.fat_size_sectors * fat16->boot_sector.sector_size);
     fread(fat16->FAT, sizeof(unsigned short), fat16->boot_sector.fat_size_sectors * fat16->boot_sector.sector_size / 2, fat16->device);
 
-    struct fat16_inode *root = malloc(sizeof(struct fat16_inode));
+    struct fat16_inode *root = calloc(1, sizeof(struct fat16_inode));
+
+    struct fat16_boot_sector bs = fat16->boot_sector;
+    long root_directory_region_start = (bs.reserved_sectors + bs.number_of_fats * bs.fat_size_sectors) * bs.sector_size;
+    
+    fseek(fat16->device, root_directory_region_start, SEEK_SET);
+
+    struct fat16_entry entry;
+
+    for (int i = 0; i < fat16->boot_sector.root_dir_entries; i++) {
+        fread(&entry, sizeof(struct fat16_entry), 1, fat16->device);
+
+        if (!convert_attributes(entry.attributes).is_volume_label) continue;
+
+        root->entry = entry;
+        break;
+    }
+
     root->ino = 1;
     root->attributes.is_directory = true;
-    root->entry.starting_cluster = 0;
 
     fat16_inodes_add(fat16->inodes, root);
 }
@@ -119,7 +135,7 @@ void fat16_fuse_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *f
         return;
     }
 
-    struct stat *stat = fat16_inode_get_stat(inode);
+    struct stat *stat = fat16_inode_get_stat(super, inode);
 
     fuse_reply_attr(req, stat, 3600.0);
 
@@ -149,7 +165,7 @@ void fat16_fuse_lookup(fuse_req_t req, fuse_ino_t parent, const char *name)
     entry->entry_timeout = 0;
     entry->ino = inode->ino;
 
-    struct stat *stat = fat16_inode_get_stat(inode);
+    struct stat *stat = fat16_inode_get_stat(super, inode);
     entry->attr = *stat;
 
     fuse_reply_entry(req, entry);
@@ -204,7 +220,16 @@ void fat16_fuse_releasedir(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info
 
 void fat16_fuse_statfs(fuse_req_t req, fuse_ino_t ino) 
 {
+    struct fat16_super *super = fuse_req_userdata(req);
+    struct fat16_boot_sector bs = super->boot_sector;
+
     struct statvfs *statfs = calloc(1, sizeof(struct statvfs));
+
+    statfs->f_bsize = bs.sectors_per_cluster * bs.sector_size;
+    statfs->f_frsize = bs.sector_size;
+    statfs->f_files = super->inodes.amount;
+    statfs->f_namemax = 8;
+
     fuse_reply_statfs(req, statfs);
 
     free(statfs);
@@ -218,7 +243,11 @@ int main(int argc, char *argv[]) {
     
     if (fuse_parse_cmdline(&args, &opts) != 0) return 1;
 
-    struct fat16_super fat16 = {.device = fopen(argv[1], "rb")};
+    struct fat16_super fat16 = {
+        .device = fopen(argv[1], "rb"),
+        .uid = getuid(),
+        .gid = getgid(),
+    };
     se = fuse_session_new(&args, &fat16_fuse_oper, sizeof(fat16_fuse_oper), &fat16);
 
     int ret = -1;

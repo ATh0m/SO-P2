@@ -138,15 +138,6 @@ struct fat16_inode {
  * };
  */
 
-/*  Wypełnianie systemowej struktury stat (sys/stat.h) na podstawie informacji ze
- *  struktury fat16_inode
- *
- *  @param [struct fat16_inode *] inode - struktura opisująca inode fat16
- *
- *  @return - wypełniona struktura stat (sys/stat.h)
- */
-struct stat * fat16_inode_get_stat(struct fat16_inode *inode);
-
 /* ----------------- Struktura do przetrzymywania inode'ów FAT16 ---------------------- */
 
 /* Lista inode'ów. */
@@ -162,6 +153,7 @@ struct fat16_inode_node {
 struct fat16_inodes {
     struct fat16_inode_node **container;
     size_t size;
+    size_t amount;
 };
 
 /* Inicjalizacja struktury fat16_inodes
@@ -218,9 +210,22 @@ struct fat16_super {
     FILE *device;
 
     struct fat16_inodes inodes;
+
+    uid_t uid;
+    gid_t gid;
 };
 
 /* -------------------- Implementacja operacji fuse dla systemu FAT16 --------------------- */
+
+/*  Wypełnianie systemowej struktury stat (sys/stat.h) na podstawie informacji ze
+ *  struktury fat16_inode
+ *
+ *  @param [struct fat16_super *] super - wskaźnik do głównej struktury FAT16
+ *  @param [struct fat16_inode *] inode - struktura opisująca inode fat16
+ *
+ *  @return - wypełniona struktura stat (sys/stat.h)
+ */
+struct stat * fat16_inode_get_stat(struct fat16_super *super, struct fat16_inode *inode);
 
 /* Odpowiednik fuse_lookup
  * Wyszukiwanie inode'a w podanym katalogu na podstawie nazwy
@@ -253,5 +258,22 @@ struct fat16_inode_node * fat16_readdir(struct fat16_super *super, struct fat16_
  *  @param [size_t] size - rozmiar bufora
  */
 void fat16_read(struct fat16_super *super, struct fat16_inode *inode, char *buffer, size_t size, off_t off);
+
+/* --------------------------- Systemowa struktura statvfs ------------------------ */
+
+/* struct statvfs {
+ *     unsigned long  f_bsize;    // Filesystem block size
+ *     unsigned long  f_frsize;   // Fragment size
+ *     fsblkcnt_t     f_blocks;   // Size of fs in f_frsize units
+ *     fsblkcnt_t     f_bfree;    // Number of free blocks 
+ *     fsblkcnt_t     f_bavail;   // Number of free blocks for unprivileged users
+ *     fsfilcnt_t     f_files;    // Number of inodes
+ *     fsfilcnt_t     f_ffree;    // Number of free inodes
+ *     fsfilcnt_t     f_favail;   // Number of free inodes for unprivileged users
+ *     unsigned long  f_fsid;     // Filesystem ID
+ *     unsigned long  f_flag;     // Mount flags
+ *     unsigned long  f_namemax;  // Maximum filename length
+ * };
+ */
 
 #endif
