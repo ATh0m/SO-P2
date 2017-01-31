@@ -65,6 +65,7 @@ void fat16_fuse_init(void *userdata, struct fuse_conn_info *conn)
     }
 
     root->ino = 1;
+    root->entry.starting_cluster = 0;
     root->attributes.is_directory = true;
 
     fat16_inodes_add(fat16->inodes, root);
@@ -137,7 +138,7 @@ void fat16_fuse_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *f
 
     struct stat *stat = fat16_inode_get_stat(super, inode);
 
-    fuse_reply_attr(req, stat, 3600.0);
+    fuse_reply_attr(req, stat, 1.0);
 
     free(stat);
 }
@@ -176,6 +177,14 @@ void fat16_fuse_lookup(fuse_req_t req, fuse_ino_t parent, const char *name)
 
 void fat16_fuse_opendir(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi) 
 {
+    struct fat16_super *super = fuse_req_userdata(req);
+    struct fat16_inode *parent_inode = fat16_inodes_get(super->inodes, ino);
+
+    if (!parent_inode->attributes.is_directory) {
+        fuse_reply_err(req, ENOTDIR);
+        return;
+    }
+
     fuse_reply_open(req, fi);
 }
 
@@ -192,8 +201,12 @@ void fat16_fuse_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, 
     struct dirbuf *b = calloc(1, sizeof(struct dirbuf));
     struct fat16_inode *child_inode;
 
-    // dirbuf_add(req, b, ".", ino);
-    // dirbuf_add(req, b, "..", ino);
+    /* Niepotrzebne, bo Fuse o to dba
+     *
+     * dirbuf_add(req, b, ".", ino);
+     * dirbuf_add(req, b, "..", ino);
+     *
+     */ 
 
     struct fat16_inode_node *tmp, *child_inodes = fat16_readdir(super, parent_inode);
 

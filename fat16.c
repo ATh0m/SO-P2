@@ -196,43 +196,43 @@ void __set_device_position_on_cluster(struct fat16_super *super, int cluster_num
 
     long root_directory_region_start = (bs.reserved_sectors + bs.number_of_fats * bs.fat_size_sectors) * bs.sector_size;
     long data_region_start = root_directory_region_start + bs.root_dir_entries * sizeof(struct fat16_entry);
-    
-    fseek(super->device, data_region_start + (cluster_number - 2) * bs.sectors_per_cluster * bs.sector_size, SEEK_SET);
-}
 
-void __set_device_position_on_entry(struct fat16_super *super, struct fat16_inode *inode)
-{
-    struct fat16_boot_sector bs = super->boot_sector;
-    long root_directory_region_start = (bs.reserved_sectors + bs.number_of_fats * bs.fat_size_sectors) * bs.sector_size;
-
-    if (inode->ino == 1) {
+    if (cluster_number == 0) {
         fseek(super->device, root_directory_region_start, SEEK_SET);
         return;
     }
- 
-    __set_device_position_on_cluster(super, inode->entry.starting_cluster);
+    
+    fseek(super->device, data_region_start + (cluster_number - 2) * bs.sectors_per_cluster * bs.sector_size, SEEK_SET);
 }
 
 struct fat16_inode * fat16_lookup(struct fat16_super *super, struct fat16_inode *parent, const char *name)
 {
     struct fat16_boot_sector bs = super->boot_sector;
-
-    __set_device_position_on_entry(super, parent);
-
     struct fat16_entry entry;
 
     int entries_amount = bs.sectors_per_cluster * bs.sector_size / sizeof(struct fat16_entry);
+    if (parent->ino == 1) entries_amount = super->boot_sector.root_dir_entries;
 
-    for (int i = 0; i < entries_amount; i++) {
-        uint64_t ino = ftell(super->device);
-        fread(&entry, sizeof(struct fat16_entry), 1, super->device);
+    unsigned short cluster = parent->entry.starting_cluster;
 
-        char *filename = fat16_format_name(entry);
-        if (strcmp(name, filename) == 0) {
+    while (cluster != 0xFFFF) {
+        
+        __set_device_position_on_cluster(super, cluster);
+
+        for (int i = 0; i < entries_amount; i++) {
+            uint64_t ino = ftell(super->device);
+            fread(&entry, sizeof(struct fat16_entry), 1, super->device);
+
+            char *filename = fat16_format_name(entry);
+            if (strcmp(name, filename) == 0) {
+                free(filename);
+                return fat16_inodes_get(super->inodes, ino);
+            }
             free(filename);
-            return fat16_inodes_get(super->inodes, ino);
         }
-        free(filename);
+
+        if (parent->ino == 1) break;
+        cluster = super->FAT[cluster];
     }
 
     return NULL;
@@ -241,34 +241,41 @@ struct fat16_inode * fat16_lookup(struct fat16_super *super, struct fat16_inode 
 struct fat16_inode_node * fat16_readdir(struct fat16_super *super, struct fat16_inode *parent)
 {
     struct fat16_boot_sector bs = super->boot_sector;
-
-    __set_device_position_on_entry(super, parent);
-
     struct fat16_entry entry;
 
     int entries_amount = bs.sectors_per_cluster * bs.sector_size / sizeof(struct fat16_entry);
     if (parent->ino == 1) entries_amount = super->boot_sector.root_dir_entries;
 
+    unsigned short cluster = parent->entry.starting_cluster;
+
     struct fat16_inode_node *child_inodes = NULL;
     struct fat16_inode *child_inode;
 
-    for (int i = 0; i < entries_amount; i++) {
-        uint64_t ino = ftell(super->device);
-        fread(&entry, sizeof(struct fat16_entry), 1, super->device);
+    while (cluster != 0xFFFF) {
 
-        if (entry.filename[0] == 0x00) continue;
-        if (entry.filename[0] == 0xE5) continue;
-        if (convert_attributes(entry.attributes).is_volume_label) continue;
+        __set_device_position_on_cluster(super, cluster);
 
-        child_inode = fat16_inodes_find(super->inodes, ino, entry);
+        for (int i = 0; i < entries_amount; i++) {
+            uint64_t ino = ftell(super->device);
+            fread(&entry, sizeof(struct fat16_entry), 1, super->device);
 
-        if (child_inode) {
-            struct fat16_inode_node *tmp = malloc(sizeof(struct fat16_inode_node));
-            tmp->inode = child_inode;
-            tmp->next = child_inodes;
+            if (entry.filename[0] == 0x00) continue;
+            if (entry.filename[0] == 0xE5) continue;
+            if (convert_attributes(entry.attributes).is_volume_label) continue;
 
-            child_inodes = tmp;
+            child_inode = fat16_inodes_find(super->inodes, ino, entry);
+
+            if (child_inode) {
+                struct fat16_inode_node *tmp = malloc(sizeof(struct fat16_inode_node));
+                tmp->inode = child_inode;
+                tmp->next = child_inodes;
+
+                child_inodes = tmp;
+            }
         }
+
+        if (parent->ino == 1) break;
+        cluster = super->FAT[cluster];
     }
 
     return child_inodes;
@@ -301,7 +308,9 @@ char * fat16_format_name(struct fat16_entry entry)
 
 void fat16_read(struct fat16_super *super, struct fat16_inode *inode, char *buffer, size_t size, off_t off)
 {
-    int cluster = inode->entry.starting_cluster;
+    unsigned short cluster = inode->entry.starting_cluster;
+    if (cluster == 0xFFFF) return;
+
     struct fat16_boot_sector bs = super->boot_sector;
 
     for (int i = 0; i < off / (bs.sectors_per_cluster * bs.sector_size); i++) cluster = super->FAT[cluster];
@@ -316,6 +325,8 @@ void fat16_read(struct fat16_super *super, struct fat16_inode *inode, char *buff
 
     while (_size < size) {
         cluster = super->FAT[cluster];
+        if (cluster == 0xFFFF) return;
+
         __set_device_position_on_cluster(super, cluster);
 
         fread(buffer + _size, min(bs.sectors_per_cluster * bs.sector_size, size - _size), 1, super->device);
