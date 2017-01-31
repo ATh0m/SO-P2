@@ -195,7 +195,7 @@ void fat16_fuse_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, 
     // dirbuf_add(req, b, ".", ino);
     // dirbuf_add(req, b, "..", ino);
 
-    struct fat16_inode_node *child_inodes = fat16_readdir(super, parent_inode);
+    struct fat16_inode_node *tmp, *child_inodes = fat16_readdir(super, parent_inode);
 
     while (child_inodes) {
         child_inode = child_inodes->inode;
@@ -204,7 +204,9 @@ void fat16_fuse_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, 
         dirbuf_add(req, b, filename, child_inode->ino);
         free(filename);
 
+        tmp = child_inodes;
         child_inodes = child_inodes->next;
+        free(tmp);
     }
 
     reply_buf_limited(req, b->p, b->size, off, size);

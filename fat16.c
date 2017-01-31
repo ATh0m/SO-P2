@@ -84,6 +84,21 @@ struct stat * fat16_inode_get_stat(struct fat16_super *super, struct fat16_inode
     if (inode->attributes.is_directory) {
         stat->st_mode = S_IFDIR | 0755;     // Ustawienie uprawnień dr-xr-xr-x
         stat->st_nlink = 2;
+
+        struct fat16_inode_node *tmp, *child_inodes = fat16_readdir(super, inode);
+        struct fat16_inode *child_inode;
+
+        while (child_inodes) {
+            child_inode = child_inodes->inode;
+
+            if (child_inode->attributes.is_directory) stat->st_nlink++;
+
+            tmp = child_inodes;
+            child_inodes = child_inodes->next;
+
+            free(tmp);
+        }
+
     } else {
         stat->st_mode = S_IFREG | 0444;     // Ustawienie uprawnień -r--r--r--
         stat->st_nlink = 1;
