@@ -293,9 +293,9 @@ char * fat16_format_name(struct fat16_entry entry)
     strncat(name, (char *) entry.filename, i);
 
     if (!attributes.is_directory) {
-        strcat(name, ".");
-
         i = 0; while (i < 3 && entry.ext[i] != ' ') i++;
+
+        if (i != 0) strcat(name, ".");
         strncat(name, (char *) entry.ext, i);
     }
 
